@@ -10,6 +10,18 @@ const urlDatabase = {
   "9sm5xK": "http://www.google.com"
 };
 
+// generate random string for Short URL ID - 6 random alphanumeric characters:
+const generateRandomString = function (length) {
+  const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+  let result = '';
+
+  for (let i = 0; i < length; i++) {
+    const randomIndex = Math.floor(Math.random() * characters.length);
+    result += characters.charAt(randomIndex);
+  }
+  return result;
+}
+
 app.get("/", (req, res) => {
   res.send("Hello!");
 });
