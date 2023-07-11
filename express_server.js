@@ -26,6 +26,14 @@ app.get("/", (req, res) => {
   res.send("Hello!");
 });
 
+// login
+app.post("/login", (req, res) => {
+  const userName = req.body.username;
+  console.log(userName);
+  res.cookie('username', userName)
+  res.redirect(`/urls`);
+});
+
 app.get("/urls.json", (req, res) => {
   res.json(urlDatabase);
 });
