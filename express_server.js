@@ -65,7 +65,6 @@ const getUserByEmail = function (email, password) {
 
     if (userEmail === email && userPassword === password) {
       user = key;
-      console.log(user);
       return true;
     }
   }
@@ -83,6 +82,9 @@ app.get("/register", (req, res) => {
     urls: urlDatabase,
     users: users
   };
+  if (req.cookies["user_id"]) {
+    return res.redirect('/urls');
+  }
   res.render("register", templateVars);
 });
 
@@ -95,7 +97,6 @@ app.post("/register", (req, res) => {
   } else {
     users[id] = { id, email, password };
     res.cookie('user_id', id);
-    console.log(users);
     return res.redirect('/urls');
   }
 });
@@ -104,13 +105,10 @@ app.post("/register", (req, res) => {
 app.post("/login", (req, res) => {
   const email = req.body.email;
   const password = req.body.password;
-  console.log(email);
-  console.log(password);
   if (getUserByEmail(email, password) === false) {
     return res.status(403).send('Invalid email or password');
   } else {
     res.cookie('user_id', user);
-    console.log('logging in');
     return res.redirect('/urls');
   }
 });
@@ -121,6 +119,9 @@ app.get("/login", (req, res) => {
     urls: urlDatabase,
     users: users
   };
+  if (req.cookies["user_id"]) {
+    return res.redirect('/urls');
+  }
   res.render("login", templateVars);
 });
 
@@ -147,10 +148,12 @@ app.get("/urls", (req, res) => {
 });
 
 app.post("/urls", (req, res) => {
-  console.log(req.body); // Log the POST request body to the console
-  const shortUrl = generateRandomString(6);
-  urlDatabase[shortUrl] = req.body.longURL;
-  res.redirect(`/urls/${shortUrl}`);
+  if (req.cookies["user_id"]) {
+    const shortUrl = generateRandomString(6);
+    urlDatabase[shortUrl] = req.body.longURL;
+    return res.redirect(`/urls/${shortUrl}`);
+  }
+  res.status(403).send('Please login');
 });
 
 app.get("/urls/new", (req, res) => {
@@ -158,6 +161,9 @@ app.get("/urls/new", (req, res) => {
     username: req.cookies["user_id"],
     users: users
   };
+  if (!req.cookies["user_id"]) {
+    return res.redirect('/login');
+  }
   res.render("urls_new", templateVars);
 });
 
@@ -177,6 +183,9 @@ app.post("/urls/:id/edit", (req, res) => {
 app.get("/u/:id", (req, res) => {
   const { id } = req.params;
   const longURL = urlDatabase[id];
+  if (!longURL) {
+    res.status(404).send("URL not found");
+  }
   res.redirect(longURL);
 });
 
