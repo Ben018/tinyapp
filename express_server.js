@@ -90,6 +90,15 @@ app.post("/login", (req, res) => {
   res.redirect(`/urls`);
 });
 
+app.get("/login", (req, res) => {
+  const templateVars = {
+    username: req.cookies["user_id"],
+    urls: urlDatabase,
+    users: users
+  };
+  res.render("login", templateVars);
+});
+
 app.post("/logout", (req, res) => {
   res.clearCookie('user_id');
   res.redirect(`/urls`);
