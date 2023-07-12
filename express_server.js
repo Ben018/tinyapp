@@ -2,6 +2,7 @@ const express = require("express");
 const app = express();
 const PORT = 8080; // default port 8080
 const morgan = require('morgan');
+let user;
 
 const cookieParser = require('cookie-parser')
 app.use(cookieParser())
@@ -39,9 +40,8 @@ const generateRandomString = function (length) {
   }
   return result;
 }
-
 // checks to see if email/password is empty and if email is already in users object
-const getUserByEmail = function (email, password) {
+const registrationCheck = function (email, password) {
   if (email.length === 0 || password.length == 0) {
     return false;
   }
@@ -49,9 +49,27 @@ const getUserByEmail = function (email, password) {
     const userEmail = users[key].email;
     if (userEmail === email) {
       return false;
+    };
+  };
+  return true
+};
+
+// checks to see if email is already in users object for login
+const getUserByEmail = function (email, password) {
+  if (email.length === 0 || password.length == 0) {
+    return false;
+  }
+  for (const key in users) {
+    const userEmail = users[key].email;
+    const userPassword = users[key].password;
+
+    if (userEmail === email && userPassword === password) {
+      user = key;
+      console.log(user);
+      return true;
     }
   }
-  return true;
+  return false;
 }
 
 app.get("/", (req, res) => {
@@ -72,22 +90,29 @@ app.post("/register", (req, res) => {
   const id = generateRandomString(13);
   const email = req.body.email;
   const password = req.body.password;
-  if (getUserByEmail(email, password) === false) {
+  if (registrationCheck(email, password) === false) {
     return res.status(400).send('Invalid email or password');
   } else {
     users[id] = { id, email, password };
-    // res.cookie('user_id', id);
+    res.cookie('user_id', id);
     console.log(users);
     return res.redirect('/urls');
   }
 });
 
-// login
+// login verification
 app.post("/login", (req, res) => {
-  const userName = req.body.username;
-  console.log(userName);
-  res.cookie('user_id', userName)
-  res.redirect(`/urls`);
+  const email = req.body.email;
+  const password = req.body.password;
+  console.log(email);
+  console.log(password);
+  if (getUserByEmail(email, password) === false) {
+    return res.status(403).send('Invalid email or password');
+  } else {
+    res.cookie('user_id', user);
+    console.log('logging in');
+    return res.redirect('/urls');
+  }
 });
 
 app.get("/login", (req, res) => {
@@ -101,7 +126,7 @@ app.get("/login", (req, res) => {
 
 app.post("/logout", (req, res) => {
   res.clearCookie('user_id');
-  res.redirect(`/urls`);
+  res.redirect(`/login`);
 });
 
 app.get("/urls.json", (req, res) => {

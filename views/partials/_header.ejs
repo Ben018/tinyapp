@@ -13,14 +13,13 @@
         <% if (!users[username]) { %>
           <a class="nav-item nav-link" href="/register">Register</a>
           <a class="nav-item nav-link" href="/login">Login</a>
-          <%= users[username] %>
-            </form>
-            <% } else { %>
-              Logged in as: <%= users[username].email %>!
-                <form action="/logout" method="POST">
-                  <button type="submit">Logout</button>
-                </form>
-                <% } %>
+          </form>
+          <% } else { %>
+            Logged in as: <%= users[username].email %>!
+              <form action="/logout" method="POST">
+                <button type="submit">Logout</button>
+              </form>
+              <% } %>
       </div>
     </div>
   </nav>
