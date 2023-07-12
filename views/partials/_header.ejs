@@ -9,15 +9,15 @@
       <div class="navbar-nav">
         <a class="nav-item nav-link" href="/urls">My URLs</a>
         <a class="nav-item nav-link" href="/urls/new">Create New URL</a>
-        <!-- username -->
-        <% if (!username) { %>
+        <!-- email -->
+        <% if (!users[username]) { %>
           <form action="/login" method="POST">
             <input type="text" name="username" placeholder="Username" />
             <button type="submit">Login</button>
-            <%= username %>
+            <%= users[username] %>
           </form>
           <% } else { %>
-            Logged in as: <%= username %>!
+            Logged in as: <%= users[username].email %>!
               <form action="/logout" method="POST">
                 <button type="submit">Logout</button>
               </form>
