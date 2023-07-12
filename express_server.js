@@ -1,19 +1,34 @@
 const express = require("express");
 const app = express();
 const PORT = 8080; // default port 8080
+const morgan = require('morgan');
 
 const cookieParser = require('cookie-parser')
 app.use(cookieParser())
 
 app.set("view engine", "ejs"); // tells the Express app to use EJS as its templating engine.
-app.use(express.urlencoded({ extended: true }));
+app.use(express.urlencoded({ extended: true })); // body parser
+app.use(morgan('dev'));
 
 const urlDatabase = {
   "b2xVn2": "http://www.lighthouselabs.ca",
   "9sm5xK": "http://www.google.com"
 };
 
-// generate random string for Short URL ID - 6 random alphanumeric characters:
+const users = {
+  userRandomID: {
+    id: "userRandomID",
+    email: "user@example.com",
+    password: "purple-monkey-dinosaur",
+  },
+  user2RandomID: {
+    id: "user2RandomID",
+    email: "user2@example.com",
+    password: "dishwasher-funk",
+  },
+};
+
+// generate random string for Short URL ID/user ID - 6 random alphanumeric characters:
 const generateRandomString = function (length) {
   const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
   let result = '';
@@ -38,6 +53,16 @@ app.get("/register", (req, res) => {
   res.render("register", templateVars);
 });
 
+app.post("/register", (req, res) => {
+  const id = generateRandomString(13);
+  const email = req.body.email;
+  const password = req.body.password;
+  users[id] = { id, email, password };
+  res.cookie('user_id', id);
+  console.log(users);
+  res.redirect('/urls');
+});
+
 // login
 app.post("/login", (req, res) => {
   const userName = req.body.username;
@@ -58,11 +83,6 @@ app.get("/urls.json", (req, res) => {
 app.get("/hello", (req, res) => {
   res.send("<html><body>Hello <b>World</b></body></html>\n");
 });
-
-// app.get("/urls", (req, res) => {
-//   const templateVars = { urls: urlDatabase };
-//   res.render("urls_index", templateVars);
-// });
 
 app.get("/urls", (req, res) => {
   const templateVars = {
