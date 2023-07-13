@@ -2,6 +2,7 @@ const express = require("express");
 const app = express();
 const PORT = 8080; // default port 8080
 const morgan = require('morgan');
+const bcrypt = require("bcryptjs");
 let user; // user id
 
 
@@ -11,11 +12,6 @@ app.use(cookieParser())
 app.set("view engine", "ejs"); // tells the Express app to use EJS as its templating engine.
 app.use(express.urlencoded({ extended: true })); // body parser
 app.use(morgan('dev'));
-
-// const urlDatabase = {
-//   "b2xVn2": "http://www.lighthouselabs.ca",
-//   "9sm5xK": "http://www.google.com"
-// };
 
 const urlDatabase = {
   b6UTxQ: {
@@ -32,17 +28,16 @@ const urlDatabase = {
   },
 };
 
-
 const users = {
   userRandomID: {
     id: "userRandomID",
     email: "user@example.com",
-    password: "purple-monkey-dinosaur",
+    hashedPassword: "purple-monkey-dinosaur",
   },
   user2RandomID: {
     id: "user2RandomID",
     email: "user2@example.com",
-    password: "dishwasher-funk",
+    hashedPassword: "dishwasher-funk",
   },
 };
 
@@ -78,9 +73,8 @@ const getUserByEmail = function (email, password) {
   }
   for (const key in users) {
     const userEmail = users[key].email;
-    const userPassword = users[key].password;
 
-    if (userEmail === email && userPassword === password) {
+    if (userEmail === email) {
       user = key;
       return true;
     }
@@ -99,6 +93,18 @@ const urlsForUser = function (id) {
   }
   console.log(URLs);
   return URLs;
+};
+
+// authenticates password
+const authenticate = function (email, password) {
+  const hashedPassword = users[user].hashedPassword;;
+  console.log(bcrypt.compareSync(password, hashedPassword));
+  if (bcrypt.compareSync(password, hashedPassword)) {
+    console.log('password is right');
+    return true;
+  }
+  console.log('wrong password');
+  return false;
 };
 
 app.get("/", (req, res) => {
@@ -122,10 +128,12 @@ app.post("/register", (req, res) => {
   const id = generateRandomString(13);
   const email = req.body.email;
   const password = req.body.password;
+  const hashedPassword = bcrypt.hashSync(password, 10)
+
   if (registrationCheck(email, password) === false) {
     return res.status(400).send('Invalid email or password');
   } else {
-    users[id] = { id, email, password };
+    users[id] = { id, email, hashedPassword };
     console.log(users);
     res.cookie('user_id', id);
     return res.redirect('/urls');
@@ -136,7 +144,7 @@ app.post("/register", (req, res) => {
 app.post("/login", (req, res) => {
   const email = req.body.email;
   const password = req.body.password;
-  if (getUserByEmail(email, password) === false) {
+  if (getUserByEmail(email, password) === false || authenticate(email, password) === false) {
     return res.status(403).send('Invalid email or password');
   } else {
     res.cookie('user_id', user);
@@ -246,19 +254,6 @@ app.get("/urls/:id", (req, res) => {
     users: users
   };
   res.render("urls_show", templateVars);
-});
-
-app.post("/urls", (req, res) => {
-  if (req.cookies["user_id"]) {
-    const shortUrl = generateRandomString(6);
-    console.log(shortUrl)
-    urlDatabase[shortUrl] = {};
-    urlDatabase[shortUrl].longURL = req.body.longURL;
-    urlDatabase[shortUrl].userID = req.cookies["user_id"];
-    console.log(urlDatabase)
-    return res.redirect(`/urls/${shortUrl}`);
-  }
-  res.send('Please register or login');
 });
 
 app.listen(PORT, () => {
