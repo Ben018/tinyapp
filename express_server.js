@@ -4,7 +4,8 @@ const PORT = 8080; // default port 8080
 const morgan = require('morgan');
 const bcrypt = require("bcryptjs");
 const cookieSession = require('cookie-session')
-let user; // user id
+const helperFunctions = require("./helpers");
+// let user; // user id ----------------------------------------------------------------------------------------------------->
 
 
 // app.use(cookieParser()); // Allows us to read and set the cookie using `req.cookies` a res.cookie() respectively
@@ -73,22 +74,6 @@ const registrationCheck = function (email, password) {
   return true
 };
 
-// checks to see if email is already in users object for login
-const getUserByEmail = function (email, password) {
-  if (email.length === 0 || password.length == 0) {
-    return false;
-  }
-  for (const key in users) {
-    const userEmail = users[key].email;
-
-    if (userEmail === email) {
-      user = key;
-      return true;
-    }
-  }
-  return false;
-}
-
 // returns the URLs where the userID is equal to the id of the currently logged-in user
 const urlsForUser = function (id) {
   let URLs = {}; // url list for user
@@ -104,6 +89,8 @@ const urlsForUser = function (id) {
 
 // authenticates password
 const authenticate = function (email, password) {
+  const user = helperFunctions.getUserByEmail(email, users);
+  console.log(`user at authen ${user}`);
   const hashedPassword = users[user].hashedPassword;;
   console.log(bcrypt.compareSync(password, hashedPassword));
   if (bcrypt.compareSync(password, hashedPassword)) {
@@ -151,7 +138,11 @@ app.post("/register", (req, res) => {
 app.post("/login", (req, res) => {
   const email = req.body.email;
   const password = req.body.password;
-  if (getUserByEmail(email, password) === false || authenticate(email, password) === false) {
+  const user = helperFunctions.getUserByEmail(email, users);
+  if (password.length === 0) {
+    return res.status(403).send('Invalid email or password');
+  }
+  if (user === undefined || authenticate(email, password) === false) {
     return res.status(403).send('Invalid email or password');
   } else {
     req.session.user_id = user;
